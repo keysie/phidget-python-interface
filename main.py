@@ -4,7 +4,9 @@
 import time
 import sys
 import datetime
+import numpy
 import decimal
+import collections
 import Phidget22.PhidgetException as PhiEx
 
 import board
@@ -22,6 +24,7 @@ sys.stdout.write("Python 3.6 Phidget Bridge Interface\n")
 sys.stdout.write("by Keysie\n\n")
 
 measurements = [0.0, 0.0, 0.0, 0.0]
+display_filter_queue = collections.deque(maxlen=20)
 
 prefix = input("Specify prefix for filename or press ENTER for no prefix:")
 if prefix != '':
@@ -51,10 +54,13 @@ while True:
                 except PhiEx.PhidgetException as e:
                     print("Phidget Exception % i: % s" % (e.code, e.details))
 
-            sys.stdout.write("\r%s:%0.3EN  %s:%0.3EN  %s:%0.3EN  %s:%0.3EN" % (bridge.channel_names[0], measurements[0],
-                                                                           bridge.channel_names[1], measurements[1],
-                                                                           bridge.channel_names[2], measurements[2],
-                                                                           bridge.channel_names[3], measurements[3]))
+            display_filter_queue.appendleft(numpy.asarray(measurements))
+            filtered_values = sum(display_filter_queue)/len(display_filter_queue)
+
+            sys.stdout.write("\r%s:%0.3EN  %s:%0.3EN  %s:%0.3EN  %s:%0.3EN" % (bridge.channel_names[0], filtered_values[0],
+                                                                               bridge.channel_names[1], filtered_values[1],
+                                                                               bridge.channel_names[2], filtered_values[2],
+                                                                               bridge.channel_names[3], filtered_values[3]))
             sys.stdout.flush()
 
             with open(filename, 'a') as file:
