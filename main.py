@@ -10,6 +10,12 @@ import Phidget22.PhidgetException as PhiEx
 import board
 
 
+def excel_date(date1):
+    temp = datetime.datetime(1899, 12, 30)    # Note, not 31st Dec but 30th!
+    delta = date1 - temp
+    return float(delta.days) + (float(delta.seconds) / 86400) + (float(delta.microseconds) / (86400 * 1000 * 1000))
+
+
 bridge = board.Board()
 
 sys.stdout.write("Python 3.6 Phidget Bridge Interface\n")
@@ -29,16 +35,15 @@ while True:
 
 
         filename = prefix + datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S") + ".csv"
-        starttime = datetime.datetime.now()
         with open(filename, 'w+') as file:
-            file.write("time (seconds since start), %s (N), %s (N), %s (N), %s (N)\n" % (bridge.channel_names[0],
+            file.write("time (absolute), %s (N), %s (N), %s (N), %s (N)\n" % (bridge.channel_names[0],
                                                                          bridge.channel_names[1],
                                                                          bridge.channel_names[2],
                                                                          bridge.channel_names[3]))
 
         while True:
 
-            timestamp = (datetime.datetime.now() - starttime).total_seconds()
+            timestamp = excel_date(datetime.datetime.now())
 
             for i in range(0, 4):
                 try:
