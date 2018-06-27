@@ -2,7 +2,7 @@ import Phidget22.Devices.VoltageRatioInput as Vri
 import Phidget22.PhidgetException as PhiEx
 
 
-class Board(object):
+class PhidgetBridge4Input(object):
 
     # Configuration (adjust as necessary)
     channel_names = ["0", "1", "2", "3"]   # user specified names to ease understanding of results
@@ -11,7 +11,7 @@ class Board(object):
     # Internal variables
     channels = [None, None, None, None]
 
-    def __init__(self):
+    def __init__(self, serial_no):
         # Create 4 channels for the 4 bridge inputs
         try:
             self.channels[0] = Vri.VoltageRatioInput()
@@ -25,8 +25,10 @@ class Board(object):
 
         # Configure all four channels
         try:
+            self.serial_number = serial_no
             for ch, i in list(zip(self.channels, range(0, 4))):
                 ch.setOnAttachHandler(self._attach_handler)
+                ch.setDeviceSerialNumber(serial_no)
                 ch.setChannel(i)
                 ch.open()
 
