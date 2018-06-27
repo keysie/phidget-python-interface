@@ -7,6 +7,7 @@ class PhidgetBridge4Input(object):
     # Configuration (adjust as necessary)
     channel_names = ["0", "1", "2", "3"]   # user specified names to ease understanding of results
     channel_gain = 7                        # allowed values: 1 (1x), 4 (8x), 5 (16x), 6 (32x), 7 (64x), 8 (128x)
+    serial_number = -1
 
     # Internal variables
     channels = [None, None, None, None]
