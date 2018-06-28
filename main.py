@@ -1,8 +1,8 @@
 # Python 3.6
 # Encoding: UTF-8
-# Formatting: UTF-8
 # Date created: 26.06.2018
 # Author: Robert Simpson (robert_zwilling@web.de)
+# License: MIT
 
 import time
 import signal

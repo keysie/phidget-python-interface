@@ -1,3 +1,9 @@
+# Python 3.6
+# Encoding: UTF-8
+# Date created: 26.06.2018
+# Author: Robert Simpson (robert_zwilling@web.de)
+# License: MIT
+
 import Phidget22.Devices.VoltageRatioInput as Vri
 import Phidget22.PhidgetException as PhiEx
 
