@@ -341,7 +341,7 @@ def main(STATE):
             with open(filename, 'w+') as file:
                 file.write(header + "\n")
 
-            # Set up separate worker-thread that executes the writer function. It will write down sampled data from the
+            # Set up separate worker-thread that executes the writer function. It will write sampled data from the
             # cache to the file created above in regular intervals to reduce file operations.
             writer_thread = threading.Thread(target=file_writer, daemon=True, args=(filename,))
             writer_thread.start()
