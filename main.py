@@ -353,8 +353,15 @@ def main(STATE, udp_mode):
                     file.write(header + "\n")
 
             # Set up separate worker-thread that executes the writer function. It will write sampled data from the
-            # cache to the file created above in regular intervals to reduce file operations.
-            writer_thread = threading.Thread(target=file_writer, daemon=True, args=(filename,))
+            # cache to the file created above in regular intervals to reduce file operations. In normal mode, the
+            # thread will execute the file_writer method. In udp-mode, it will execute the udp_writer method.
+            if udp_mode:
+                target = udp_writer
+                args = (udp_ip, udp_port)
+            else:
+                target = file_writer
+                args = (filename,)
+            writer_thread = threading.Thread(target=target, daemon=True, args=args)
             writer_thread.start()
 
             # Set up separate worker-thread that executes the displayer function. It will display slightly filtered
