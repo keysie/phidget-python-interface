@@ -329,7 +329,13 @@ def main(STATE, udp_mode):
                 LocalErrorCatcher(e)
 
             # Wait for user to press ENTER to start sampling
-            input("")
+            while True:
+                input("")
+                if len(connected_boards) == 0:
+                    print("Cannot start sampling: No boards are connected!")
+                    print("Connect at least one board and try again.")
+                else:
+                    break
 
             # All done, transition to sampling preparation
             STATE = "PREPARE-FOR-SAMPLING"
