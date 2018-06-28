@@ -11,6 +11,7 @@ import collections
 import threading
 import os
 import shutil
+import struct
 import ipaddress
 
 from Phidget22.Devices.Manager import *
@@ -78,6 +79,50 @@ def excel_date(date1):
     temp = datetime.datetime(1899, 12, 30)    # Note, not 31st Dec but 30th!
     delta = date1 - temp
     return float(delta.days) + (float(delta.seconds) / 86400) + (float(delta.microseconds) / (86400 * 1000 * 1000))
+
+
+def _double_to_bytes(value, target_endianness=sys.byteorder):
+    """
+    Convert a single floating point variable to a byte array. If necessary swap endianness for target system.
+    :param value: Value to be converted
+    :type value: float
+    :param target_endianness: Endianness of the target system. Defaults to the endianness of the executing machine.
+    Possible values are: 'big' or 'little'.
+    :type target_endianness: str
+    :return: Bytearray representing the input value in the target endian format
+    :rtype: bytearray
+    """
+    # get byte array in system endianness
+    byte_array = bytearray(struct.pack("d", value))
+
+    # swap endianness if necessary
+    self_endianness = sys.byteorder
+    if self_endianness != target_endianness:
+        byte_array = bytes[::-1]
+
+    return byte_array
+
+
+def doubles_to_bytes(data, target_endianness=sys.byteorder):
+    """
+    Convert a single floating point number or a list of floating point numbers to a byte array in the target endianness.
+    :param data: Value(s) to be converted
+    :type data: float or list
+    :param target_endianness: Endianness of the target system. Defaults to the endianness of the executing machine.
+    Possible values are: 'big' or 'little'.
+    :type target_endianness: str
+    :return:
+    :rtype:
+    """
+    byte_array = bytearray()
+
+    if isinstance(data, list):
+        for value in data:
+            byte_array += _double_to_bytes(value, target_endianness)
+    else:
+        byte_array += _double_to_bytes(data, target_endianness)
+
+    return byte_array
 
 
 # Cleanup function
