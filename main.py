@@ -376,7 +376,6 @@ def main(STATE, udp_mode):
             display_thread.start()
 
             sampling_start_time = time.time()
-            print("Measurement running (Press CTRL+C to terminate): ")
 
             STATE = "SAMPLING"
 
