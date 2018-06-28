@@ -105,7 +105,7 @@ def get_one_sample():
 
 
 # Executed by separate thread to write the result-cache to a file
-def writer(filename):
+def file_writer(filename):
     start_time = time.time()
 
     while True:
@@ -241,7 +241,7 @@ def main(STATE):
 
             # Set up separate worker-thread that executes the writer function. It will write down sampled data from the
             # cache to the file created above in regular intervals to reduce file operations.
-            writer_thread = threading.Thread(target=writer, daemon=True, args=(filename,))
+            writer_thread = threading.Thread(target=file_writer, daemon=True, args=(filename,))
             writer_thread.start()
 
             # Set up separate worker-thread that executes the displayer function. It will display slightly filtered
