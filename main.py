@@ -23,7 +23,7 @@ file_prefix = ""                                # prefix for filename
 sampling_start_time = 0                         # required for sample timing
 
 udp_mode = False                                # set based on input argument '-udp'
-udp_ip = ipaddress.IPv4Address('0.0.0.0')       # address of udp-target in case udp-mode is active
+udp_ip = None                                   # address of udp-target in case udp-mode is active
 udp_port = 0                                    # port @ udp-target in case udp-mode is active
 
 sampling_interval = 0.008                       # sample at 125 Hz
