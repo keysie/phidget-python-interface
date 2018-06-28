@@ -21,10 +21,16 @@ import PhidgetBridge4Input
 
 file_prefix = ""                                # prefix for filename
 sampling_start_time = 0                         # required for sample timing
+
+udp_mode = False                                # set based on input argument '-udp'
+udp_ip = ipaddress.IPv4Address('0.0.0.0')       # address of udp-target in case udp-mode is active
+udp_port = 0                                    # port @ udp-target in case udp-mode is active
+
 sampling_interval = 0.008                       # sample at 125 Hz
 display_interval = 0.2                          # update display at 5 Hz
 file_interval = 1.0                             # write results to file at 1 Hz
 udp_interval = 0.1                              # push data to udp-target at 10 Hz
+
 result_cache = collections.deque()              # stores results before they are written to a file
 display_cache = collections.deque(maxlen=10)    # stores results before they are displayed in console output
 connected_boards = {}                           # dictionary of all connected PhidgetBridge4Input devices
@@ -180,6 +186,7 @@ def file_writer(filename):
             file.write(output)
             file.flush()
 
+
 def udp_writer(ip, port):
     """
     Method to be executed by writer_thread. Periodically push sampling-results to UDP-target.
@@ -250,14 +257,45 @@ def main(STATE):
     while True:
         if STATE == "INIT":
 
-            # Query user for file prefix
-            file_prefix = input("Specify prefix for filename or press ENTER for no prefix:")
-            if file_prefix != '':
-                print(file_prefix)
-                file_prefix = file_prefix + " - "
+            # Check if operating in UDP-mode
+            if len(sys.argv) >= 2 and sys.argv[1] == '-udp':
+                udp_mode = True
+
+            # Change user queries based on mode (udp vs normal)
+            if udp_mode:
+
+                # Query user for target ip
+                default_ip = "192.168.1.98"
+                ip_string = input("Specify target IP or leave blank for default [" + default_ip + "]: ")
+                if ip_string != '':
+                    print(ip_string)
+                    udp_ip = ipaddress.IPv4Address(ip_string)
+                else:
+                    print(default_ip)
+                    udp_ip = ipaddress.IPv4Address(default_ip)
+                print("")
+
+                # Query user for target port
+                default_port = 25098
+                port_string = input("Specify target port or leave blank for default [" + str(default_port) + "]: ")
+                if port_string != '':
+                    print(ip_string)
+                    udp_port = int(port_string)
+                else:
+                    print(str(default_port))
+                    udp_port = default_port
+                print("")
+
             else:
-                print("[no prefix]")
-            print("")
+
+                # Query user for file prefix
+                file_prefix = input("Specify prefix for filename or press ENTER for no prefix:")
+                if file_prefix != '':
+                    print(file_prefix)
+                    file_prefix = file_prefix + " - "
+                else:
+                    print("[no prefix]")
+                print("")
 
             # All done, transition to waiting state
             STATE = "WAITING"
