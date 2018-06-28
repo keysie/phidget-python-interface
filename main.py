@@ -11,6 +11,7 @@ import collections
 import threading
 import os
 import shutil
+import ipaddress
 
 from Phidget22.Devices.Manager import *
 from Phidget22.Phidget import *
@@ -22,6 +23,7 @@ sampling_start_time = 0                         # required for sample timing
 sampling_interval = 0.008                       # sample at 125 Hz
 display_interval = 0.2                          # update display at 5 Hz
 file_interval = 1.0                             # write results to file at 1 Hz
+udp_interval = 0.1                              # push data to udp-target at 10 Hz
 result_cache = collections.deque()              # stores results before they are written to a file
 display_cache = collections.deque(maxlen=10)    # stores results before they are displayed in console output
 connected_boards = {}                           # dictionary of all connected PhidgetBridge4Input devices
@@ -132,6 +134,23 @@ def file_writer(filename):
         with open(filename, 'a') as file:
             file.write(output)
             file.flush()
+
+def udp_writer(ip, port):
+    """
+    Method to be executed by writer_thread. Periodically push sampling-results to UDP-target.
+    :param ip: IP-address of target computer
+    :type ip: ipaddress.ip_address
+    :param port: Port-number at target computer
+    :type port: int
+    :return: Nothing
+    :rtype: none
+    """
+    start_time = time.time()
+
+    while True:
+        # write measurements only at selected frequency
+        time.sleep(udp_interval - ((time.time() - start_time) % udp_interval))
+        pass
 
 
 # Executed by separate thread to display slightly filtered data in command line
