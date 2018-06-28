@@ -279,7 +279,7 @@ def main(STATE):
                 default_port = 25098
                 port_string = input("Specify target port or leave blank for default [" + str(default_port) + "]: ")
                 if port_string != '':
-                    print(ip_string)
+                    print(port_string)
                     udp_port = int(port_string)
                 else:
                     print(str(default_port))
