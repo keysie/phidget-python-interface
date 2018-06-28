@@ -13,6 +13,7 @@ import os
 import shutil
 import struct
 import ipaddress
+import socket
 
 from Phidget22.Devices.Manager import *
 from Phidget22.Phidget import *
@@ -191,18 +192,25 @@ def udp_writer(ip, port):
     """
     Method to be executed by writer_thread. Periodically push sampling-results to UDP-target.
     :param ip: IP-address of target computer
-    :type ip: ipaddress.ip_address
+    :type ip: IPv4Address
     :param port: Port-number at target computer
     :type port: int
     :return: Nothing
     :rtype: none
     """
     start_time = time.time()
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as udp_socket:
+        while True:
+            # write measurements only at selected frequency
+            time.sleep(udp_interval - ((time.time() - start_time) % udp_interval))
 
-    while True:
-        # write measurements only at selected frequency
-        time.sleep(udp_interval - ((time.time() - start_time) % udp_interval))
-        pass
+            # for as long as possible: pop a sample and send it over udp. if the cache is exhausted wait again.
+            while True:
+                try:
+                    (_, data) = result_cache.pop()  # ignore timestamp, only push results over udp
+                    udp_socket.sendto(doubles_to_bytes(data, 'little'), (ip.exploded, port))
+                except IndexError as e:
+                    break
 
 
 # Executed by separate thread to display slightly filtered data in command line
