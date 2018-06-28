@@ -336,18 +336,21 @@ def main(STATE, udp_mode):
 
         elif STATE == "PREPARE-FOR-SAMPLING":
 
-            # Compute filename
-            filename = file_prefix + datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S") + ".csv"
+            # open and prepare file if not in udp mode
+            if not udp_mode:
 
-            # Compute header for file (column headers)
-            header = "time (excel-format)"
-            for serial_nr, board in connected_boards.items():
-                for i in range(0, 4):
-                    header = header + ", " + str(board.serial_number) + ":" + str(board.channel_names[i]) + " (mV/V)"
+                # Compute filename
+                filename = file_prefix + datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S") + ".csv"
 
-            # Create file and write header
-            with open(filename, 'w+') as file:
-                file.write(header + "\n")
+                # Compute header for file (column headers)
+                header = "time (excel-format)"
+                for serial_nr, board in connected_boards.items():
+                    for i in range(0, 4):
+                        header = header + ", " + str(board.serial_number) + ":" + str(board.channel_names[i]) + " (mV/V)"
+
+                # Create file and write header
+                with open(filename, 'w+') as file:
+                    file.write(header + "\n")
 
             # Set up separate worker-thread that executes the writer function. It will write sampled data from the
             # cache to the file created above in regular intervals to reduce file operations.
