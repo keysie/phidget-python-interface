@@ -252,7 +252,7 @@ def displayer():
 
 
 # ========= Main Code ==========
-def main(STATE):
+def main(STATE, udp_mode):
 
     while True:
         if STATE == "INIT":
@@ -387,7 +387,7 @@ if __name__ == '__main__':
 
     # Main loop with keyboard-interrupt (Ctrl+C) handling
     try:
-        main(STATE)
+        main(STATE, udp_mode)
     except KeyboardInterrupt:
         print("Interrupt caught. Shutting down.")
         cleanup()
