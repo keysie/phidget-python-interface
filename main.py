@@ -14,6 +14,7 @@ import shutil
 import struct
 import ipaddress
 import socket
+import json
 
 from Phidget22.Devices.Manager import *
 from Phidget22.Phidget import *
@@ -345,14 +346,35 @@ def main(STATE, udp_mode):
             # open and prepare file if not in udp mode
             if not udp_mode:
 
-                # Compute filename
+                board_dict = {'serial_nr': 'name string'}
+                separator = ':'
+
+                # Look for board dictionary file. This file allows a user to specify human readable names for Phidget
+                # boards based on their serial-number. It also allows the specification of the separator used in between
+                # the board name and the channel name in the column header of the resulting *.csv file.
+                # If the file does not exist, create an empty template.
+                try:
+                    with open('board_dictionary.json', mode='r') as dict_for_read:
+                        [separator, board_dict] = json.load(dict_for_read)
+                except FileNotFoundError as e:
+                    with open('board_dictionary.json', mode='w') as dict_for_write:
+                        json.dump([separator, board_dict], dict_for_write, indent=4)
+                except OSError as e:
+                    print(e)
+                    exit(1)
+
+                # Compute name for csv output file
                 filename = file_prefix + datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S") + ".csv"
 
-                # Compute header for file (column headers)
+                # Compute header for csv output file (column headers)
                 header = "time (excel-format)"
                 for serial_nr, board in connected_boards.items():
                     for i in range(0, 4):
-                        header = header + ", " + str(board.serial_number) + ":" + str(board.channel_names[i]) + " (mV/V)"
+                        if str(serial_nr) in board_dict.keys():
+                            board_name = board_dict[str(serial_nr)]
+                        else:
+                            board_name = str(serial_nr)
+                        header = header + ", " + board_name + separator + str(board.channel_names[i]) + " (mV/V)"
 
                 # Create file and write header
                 with open(filename, 'w+') as file:
