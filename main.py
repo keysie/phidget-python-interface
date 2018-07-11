@@ -10,11 +10,13 @@ import datetime
 import collections
 import threading
 import os
-import shutil
 import struct
 import ipaddress
 import socket
 import json
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+import numpy
 
 from Phidget22.Devices.Manager import *
 from Phidget22.Phidget import *
@@ -29,12 +31,12 @@ udp_ip = None                                   # address of udp-target in case 
 udp_port = 0                                    # port @ udp-target in case udp-mode is active
 
 sampling_interval = 0.008                       # sample at 125 Hz
-display_interval = 0.2                          # update display at 5 Hz
+display_interval = 0.1                          # update display at 10 Hz
 file_interval = 1.0                             # write results to file at 1 Hz
 udp_interval = 0.1                              # push data to udp-target at 10 Hz
 
 result_cache = collections.deque()              # stores results before they are written to a file
-display_cache = collections.deque(maxlen=10)    # stores results before they are displayed in console output
+display_cache = collections.deque(maxlen=1000)  # stores results before they are displayed in console output
 connected_boards = {}                           # dictionary of all connected PhidgetBridge4Input devices
 
 STATE = "INIT"                       # INIT | WAITING | PREPARE-FOR-SAMPLING | SAMPLING | SHUTDOWN | ERROR
@@ -137,6 +139,7 @@ def doubles_to_bytes(data, target_endianness=sys.byteorder):
 def cleanup():
     signal.signal(signal.SIGINT, signal.SIG_IGN)  # ignore sigints while cleaning up
     print("Closing...")
+    plt.close('all')
     try:
         manager.close()
     except PhidgetException as e:
@@ -214,50 +217,27 @@ def udp_writer(ip, port):
                     break
 
 
-# Executed by separate thread to display slightly filtered data in command line
 def displayer():
-    start_time = time.time()
 
-    while True:
-        # update screen only at selected frequency
-        time.sleep(display_interval - ((time.time() - start_time) % display_interval))
+    fig = plt.figure()
+    ax_list = []
+    for board_index, (serial_no, board) in enumerate(connected_boards.items()):
+        ax_list.append(fig.add_subplot(len(connected_boards), 1, board_index+1))
 
-        lines = []      # lines for table
-        filtered_results = [sum(i)/len(display_cache) for i in zip(*display_cache)]     # data to display
+    def animate(i):
+        for index, ax in enumerate(ax_list):
+            ax.clear()
+            try:
+                x = numpy.array(display_cache)[:,(index*4):(index*4 + 4)]
+                x = x * 1000 * 490.5 # convert to N
+                ax.set_title('bla')
+                ax.plot(x)
+                plt.tight_layout()
+            except Exception as e:
+                pass
 
-        # clear screen and print title
-        os.system('cls')
-        console_width = shutil.get_terminal_size()[0]
-        separator = ""
-        bar = "======================================================"
-        title = "==  Measurement running. Press Ctrl+C to terminate  =="
-        for i in range(0, int(console_width/2 - len(title)/2)):
-            separator += " "
-        print(separator + bar)
-        print(separator + title)
-        print(separator + bar)
-        print("\n")
-
-        for i in range(0, 8):
-            if i in [1, 3, 4, 5, 6]:
-                lines.append("|")
-            elif i in [0, 2, 7]:
-                lines.append("+")
-
-            for board_index, (serial_no, board) in enumerate(connected_boards.items()):
-                if i == 1:
-                    lines[i] += "        " + str(board.serial_number) + "        |"
-                elif i in range(3, 7):
-                    current_value = filtered_results[4*board_index + (i-3)]
-                    lines[i] += " " + str(board.channel_names[i-3]) + ": "
-                    if current_value >= 0:
-                        lines[i] += " "
-                    lines[i] += "{:.9f}".format(current_value) + " mV/V |"
-                elif i in [0, 2, 7]:
-                    lines[i] += "----------------------+"
-
-        for line in lines:
-            print(line)
+    ani = animation.FuncAnimation(fig, animate, interval=display_interval * 1000)
+    plt.show()
 
 
 # ========= Main Code ==========
