@@ -31,12 +31,12 @@ udp_ip = None                                   # address of udp-target in case 
 udp_port = 0                                    # port @ udp-target in case udp-mode is active
 
 sampling_interval = 0.008                       # sample at 125 Hz
-display_interval = 0.1                          # update display at 10 Hz
+display_interval = 0.02                         # update display at 50 Hz
 file_interval = 1.0                             # write results to file at 1 Hz
 udp_interval = 0.1                              # push data to udp-target at 10 Hz
 
 result_cache = collections.deque()              # stores results before they are written to a file
-display_cache = collections.deque(maxlen=1000)  # stores results before they are displayed in console output
+display_cache = collections.deque(maxlen=625)   # stores results before they are displayed in console output
 connected_boards = {}                           # dictionary of all connected PhidgetBridge4Input devices
 
 STATE = "INIT"                       # INIT | WAITING | PREPARE-FOR-SAMPLING | SAMPLING | SHUTDOWN | ERROR
@@ -137,7 +137,7 @@ def doubles_to_bytes(data, target_endianness=sys.byteorder):
 
 # Cleanup function
 def cleanup():
-    signal.signal(signal.SIGINT, signal.SIG_IGN)  # ignore sigints while cleaning up
+    #signal.signal(signal.SIGINT, signal.SIG_IGN)  # ignore sigints while cleaning up
     print("Closing...")
     plt.close('all')
     try:
@@ -230,8 +230,12 @@ def displayer():
             try:
                 x = numpy.array(display_cache)[:,(index*4):(index*4 + 4)]
                 x = x * 1000 * 490.5 # convert to N
-                ax.set_title('bla')
-                ax.plot(x)
+                t = numpy.arange(0,5,0.008)
+                t = t[0:len(display_cache)]
+                t = t[::-1]
+                ax.set_xlim([5,-5])
+                ax.set_title('Force measurements')
+                ax.plot(t,x)
                 plt.tight_layout()
             except Exception as e:
                 pass
@@ -360,6 +364,7 @@ def main(STATE, udp_mode):
                 with open(filename, 'w+') as file:
                     file.write(header + "\n")
 
+
             # Set up separate worker-thread that executes the writer function. It will write sampled data from the
             # cache to the file created above in regular intervals to reduce file operations. In normal mode, the
             # thread will execute the file_writer method. In udp-mode, it will execute the udp_writer method.
@@ -429,4 +434,3 @@ if __name__ == '__main__':
 
 
     exit(0)
-
