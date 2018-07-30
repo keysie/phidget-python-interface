@@ -158,7 +158,7 @@ def get_one_sample():
             except PhidgetException as ex:
                 LocalErrorCatcher(ex)
 
-    display_cache.append(measurements)
+    display_cache.append(measurements[0] + measurements[1])
     result_cache.appendleft((timestamp, measurements))      # writer pops from right
 
 
@@ -221,14 +221,13 @@ def displayer():
 
     fig = plt.figure()
     ax_list = []
-    for board_index, (serial_no, board) in enumerate(connected_boards.items()):
-        ax_list.append(fig.add_subplot(len(connected_boards), 1, board_index+1))
+    ax_list.append(fig.add_subplot(1, 1, 1))
 
     def animate(i):
         for index, ax in enumerate(ax_list):
             ax.clear()
             try:
-                x = numpy.array(display_cache)[:,(index*4):(index*4 + 4)]
+                x = numpy.array(display_cache)
                 x = x * 1000 * 490.5 # convert to N
                 t = numpy.arange(0,5,0.008)
                 t = t[0:len(display_cache)]
