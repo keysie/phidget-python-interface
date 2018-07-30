@@ -23,6 +23,16 @@ from Phidget22.Phidget import *
 
 import PhidgetBridge4Input
 
+########### USER CONFIGURABLE VALUES ###########
+
+seconds_before_measurement = 5                  # how many seconds between measurement and appearance of desired value
+seconds_after_measurement = 5                   # how much time to be displayed after moment of measurement
+
+display_interval = 0.02                         # update display at 50 Hz
+file_interval = 1.0                             # write results to file at 1 Hz
+
+################################################
+
 file_prefix = ""                                # prefix for filename
 sampling_start_time = 0                         # required for sample timing
 
@@ -30,13 +40,11 @@ udp_mode = False                                # set based on input argument '-
 udp_ip = None                                   # address of udp-target in case udp-mode is active
 udp_port = 0                                    # port @ udp-target in case udp-mode is active
 
-sampling_interval = 0.008                       # sample at 125 Hz
-display_interval = 0.02                         # update display at 50 Hz
-file_interval = 1.0                             # write results to file at 1 Hz
 udp_interval = 0.1                              # push data to udp-target at 10 Hz
-
+sampling_interval = 0.008                       # sample at 125 Hz
+displayed_measurements = round(seconds_after_measurement / sampling_interval)
 result_cache = collections.deque()              # stores results before they are written to a file
-display_cache = collections.deque(maxlen=625)   # stores results before they are displayed in console output
+display_cache = collections.deque(maxlen=displayed_measurements)   # temporary store for displayed measurements
 connected_boards = {}                           # dictionary of all connected PhidgetBridge4Input devices
 
 STATE = "INIT"                       # INIT | WAITING | PREPARE-FOR-SAMPLING | SAMPLING | SHUTDOWN | ERROR
@@ -228,13 +236,13 @@ def displayer():
             ax.clear()
             try:
                 x = numpy.array(display_cache)
-                x = x * 1000 * 490.5 # convert to N
-                t = numpy.arange(0,5,0.008)
+                x = x * 1000 * 490.5            # convert to N
+                t = numpy.arange(0, seconds_after_measurement, sampling_interval)
                 t = t[0:len(display_cache)]
                 t = t[::-1]
-                ax.set_xlim([5,-5])
+                ax.set_xlim([seconds_after_measurement, seconds_before_measurement])
                 ax.set_title('Force measurements')
-                ax.plot(t,x)
+                ax.plot(t, x)
                 plt.tight_layout()
             except Exception as e:
                 pass
