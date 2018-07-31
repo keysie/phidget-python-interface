@@ -31,6 +31,7 @@ seconds_after_measurement = 5                   # how much time to be displayed 
 
 display_interval = 0.02                         # update display at 50 Hz
 file_interval = 1.0                             # write results to file at 1 Hz
+udp_interval = 0.1                              # push data to udp-target at 10 Hz
 
 ################################################
 
@@ -41,7 +42,6 @@ test_mode = False                               # set based on input argument '-
 udp_ip = None                                   # address of udp-target in case udp-mode is active
 udp_port = 0                                    # port @ udp-target in case udp-mode is active
 
-udp_interval = 0.1                              # push data to udp-target at 10 Hz
 sampling_interval = 0.008                       # sample at 125 Hz
 displayed_measurements = round(seconds_after_measurement / sampling_interval)
 result_cache = collections.deque()              # stores results before they are written to a file
