@@ -11,9 +11,6 @@ import threading
 import os
 import ipaddress
 import json
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-import numpy
 from PyQt5 import QtGui
 
 from Phidget22.Devices.Manager import *
