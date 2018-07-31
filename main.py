@@ -14,6 +14,7 @@ import json
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import numpy
+from PyQt4 import QtGui
 
 from Phidget22.Devices.Manager import *
 from Phidget22.Phidget import *
@@ -21,6 +22,7 @@ from Phidget22.Phidget import *
 import PhidgetBridge4Input
 
 from threads import filewriter, udpwriter, datasampler
+from sampledisplay import sample_display
 
 ########### USER CONFIGURABLE VALUES ###########
 
@@ -97,32 +99,6 @@ def cleanup():
         manager.close()
     except PhidgetException as e:
         LocalErrorCatcher(e)
-
-
-def displayer():
-
-    fig = plt.figure()
-    ax_list = []
-    ax_list.append(fig.add_subplot(1, 1, 1))
-
-    def animate(i):
-        for index, ax in enumerate(ax_list):
-            ax.clear()
-            try:
-                x = numpy.array(display_cache)
-                x = x * 1000 * 490.5            # convert to N
-                t = numpy.arange(0, seconds_after_measurement, sampling_interval)
-                t = t[0:len(display_cache)]
-                t = t[::-1]
-                ax.set_xlim([seconds_after_measurement, -seconds_before_measurement])
-                ax.set_title('Force measurements')
-                ax.plot(t, x)
-                plt.tight_layout()
-            except Exception as e:
-                pass
-
-    ani = animation.FuncAnimation(fig, animate, interval=display_interval * 1000)
-    plt.show()
 
 
 # ========= Main Code ==========
@@ -266,11 +242,6 @@ def main(STATE, udp_mode, test_mode):
             writer_thread = threading.Thread(target=target, daemon=True, args=args)
             writer_thread.start()
 
-            # Set up separate worker-thread that executes the displayer function. It will display slightly filtered
-            # (moving average over 20 samples) results in the command line at regular intervals.
-            display_thread = threading.Thread(target=displayer, daemon=True)
-            display_thread.start()
-
             # Set up thread to do the actual sampling
             target = datasampler.thread_method
             args = (connected_boards, display_cache, result_cache, sampling_interval)
@@ -310,6 +281,11 @@ if __name__ == '__main__':
     # Main loop with keyboard-interrupt (Ctrl+C) handling
     try:
         main(STATE, udp_mode, test_mode)
+        app = QtGui.QApplication(sys.argv)
+        form = sample_display.SampleDisplay(display_cache, sampling_interval, seconds_before_measurement, seconds_after_measurement, len(connected_boards))
+        form.show()
+        form.update()  # start with something
+        app.exec_()
     except KeyboardInterrupt:
         print("Interrupt caught. Shutting down.")
         cleanup()
@@ -318,7 +294,5 @@ if __name__ == '__main__':
         cleanup()
         sys.exit(e)
 
-    print("Press Enter to end anytime...");
-    character = sys.stdin.read(1)
-
+    print("Window closed. Shutting down.")
     exit(0)
