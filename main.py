@@ -4,15 +4,12 @@
 # Author: Robert Simpson (robert_zwilling@web.de)
 # License: MIT
 
-import time
-import signal
+
 import datetime
 import collections
 import threading
 import os
-import struct
 import ipaddress
-import socket
 import json
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
