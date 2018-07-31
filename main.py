@@ -37,6 +37,7 @@ file_prefix = ""                                # prefix for filename
 sampling_start_time = 0                         # required for sample timing
 
 udp_mode = False                                # set based on input argument '-udp'
+test_mode = False                               # set based on input argument '-test'
 udp_ip = None                                   # address of udp-target in case udp-mode is active
 udp_port = 0                                    # port @ udp-target in case udp-mode is active
 
@@ -252,7 +253,7 @@ def displayer():
 
 
 # ========= Main Code ==========
-def main(STATE, udp_mode):
+def main(STATE, udp_mode, test_mode):
 
     while True:
         if STATE == "INIT":
@@ -260,6 +261,10 @@ def main(STATE, udp_mode):
             # Check if operating in UDP-mode
             if len(sys.argv) >= 2 and sys.argv[1] == '-udp':
                 udp_mode = True
+
+            # Check if operating in TEST-mode
+            if len(sys.argv) >= 2 and sys.argv[1] == '-test':
+                test_mode = True
 
             # Change user queries based on mode (udp vs normal)
             if udp_mode:
@@ -319,6 +324,10 @@ def main(STATE, udp_mode):
                 manager.setOnDetachHandler(DetachHandler)
             except PhidgetException as e:
                 LocalErrorCatcher(e)
+
+            if test_mode:
+                print("Device 'FAKE' attached, Serial Number: 1337")
+                connected_boards['1337'] = PhidgetBridge4Input.PhidgetBridge4Input(1337, True)
 
             # Wait for user to press ENTER to start sampling
             while True:
@@ -424,7 +433,7 @@ if __name__ == '__main__':
 
     # Main loop with keyboard-interrupt (Ctrl+C) handling
     try:
-        main(STATE, udp_mode)
+        main(STATE, udp_mode, test_mode)
     except KeyboardInterrupt:
         print("Interrupt caught. Shutting down.")
         cleanup()
