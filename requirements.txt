@@ -1,0 +1,4 @@
+mock==2.0.0
+numpy==1.13.1
+pyqtgraph==0.10.0
+PyQt5==5.11.2
