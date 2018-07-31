@@ -240,7 +240,7 @@ def displayer():
                 t = numpy.arange(0, seconds_after_measurement, sampling_interval)
                 t = t[0:len(display_cache)]
                 t = t[::-1]
-                ax.set_xlim([seconds_after_measurement, seconds_before_measurement])
+                ax.set_xlim([seconds_after_measurement, -seconds_before_measurement])
                 ax.set_title('Force measurements')
                 ax.plot(t, x)
                 plt.tight_layout()
