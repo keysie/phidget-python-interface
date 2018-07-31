@@ -52,6 +52,7 @@ STATE = "INIT"                       # INIT | WAITING | PREPARE-FOR-SAMPLING | S
 
 # ========== Event Handling Functions ==========
 
+
 def AttachHandler(self, channel):
     attachedDevice = channel
     serialNumber = attachedDevice.getDeviceSerialNumber()
@@ -228,7 +229,6 @@ def main(STATE, udp_mode, test_mode):
                 # Create file and write header
                 with open(filename, 'w+') as file:
                     file.write(header + "\n")
-
 
             # Set up separate worker-thread that executes the writer function. It will write sampled data from the
             # cache to the file created above in regular intervals to reduce file operations. In normal mode, the
