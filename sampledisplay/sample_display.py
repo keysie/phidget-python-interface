@@ -4,7 +4,7 @@
 # Author: Robert Simpson (robert_zwilling@web.de)
 # License: MIT
 
-from PyQt4 import QtGui, QtCore
+from PyQt5 import QtGui, QtCore
 import sampledisplay.ui_main as ui_main
 import numpy
 import pyqtgraph
