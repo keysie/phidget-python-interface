@@ -26,7 +26,7 @@ from sampledisplay import sample_display
 
 ########### USER CONFIGURABLE VALUES ###########
 
-seconds_before_measurement = 5                  # how many seconds between measurement and appearance of desired value
+seconds_before_measurement = 15                 # how many seconds between measurement and appearance of desired value
 seconds_after_measurement = 5                   # how much time to be displayed after moment of measurement
 
 display_interval = 0.02                         # update display at 50 Hz
