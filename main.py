@@ -23,6 +23,8 @@ from Phidget22.Phidget import *
 
 import PhidgetBridge4Input
 
+from threads import filewriter, udpwriter, datasampler
+
 ########### USER CONFIGURABLE VALUES ###########
 
 seconds_before_measurement = 5                  # how many seconds between measurement and appearance of desired value
@@ -34,7 +36,6 @@ file_interval = 1.0                             # write results to file at 1 Hz
 ################################################
 
 file_prefix = ""                                # prefix for filename
-sampling_start_time = 0                         # required for sample timing
 
 udp_mode = False                                # set based on input argument '-udp'
 test_mode = False                               # set based on input argument '-test'
@@ -90,60 +91,6 @@ def LocalErrorCatcher(e):
     exit(1)
 
 
-# ======== Local helper functions =========
-
-# Convert datetime to excel-compatible serial time
-# source: https://stackoverflow.com/a/9574948
-def excel_date(date1):
-    temp = datetime.datetime(1899, 12, 30)    # Note, not 31st Dec but 30th!
-    delta = date1 - temp
-    return float(delta.days) + (float(delta.seconds) / 86400) + (float(delta.microseconds) / (86400 * 1000 * 1000))
-
-
-def _double_to_bytes(value, target_endianness=sys.byteorder):
-    """
-    Convert a single floating point variable to a byte array. If necessary swap endianness for target system.
-    :param value: Value to be converted
-    :type value: float
-    :param target_endianness: Endianness of the target system. Defaults to the endianness of the executing machine.
-    Possible values are: 'big' or 'little'.
-    :type target_endianness: str
-    :return: Bytearray representing the input value in the target endian format
-    :rtype: bytearray
-    """
-    # get byte array in system endianness
-    byte_array = bytearray(struct.pack("d", value))
-
-    # swap endianness if necessary
-    self_endianness = sys.byteorder
-    if self_endianness != target_endianness:
-        byte_array = bytes[::-1]
-
-    return byte_array
-
-
-def doubles_to_bytes(data, target_endianness=sys.byteorder):
-    """
-    Convert a single floating point number or a list of floating point numbers to a byte array in the target endianness.
-    :param data: Value(s) to be converted
-    :type data: float or list
-    :param target_endianness: Endianness of the target system. Defaults to the endianness of the executing machine.
-    Possible values are: 'big' or 'little'.
-    :type target_endianness: str
-    :return:
-    :rtype:
-    """
-    byte_array = bytearray()
-
-    if isinstance(data, list):
-        for value in data:
-            byte_array += _double_to_bytes(value, target_endianness)
-    else:
-        byte_array += _double_to_bytes(data, target_endianness)
-
-    return byte_array
-
-
 # Cleanup function
 def cleanup():
     #signal.signal(signal.SIGINT, signal.SIG_IGN)  # ignore sigints while cleaning up
@@ -153,77 +100,6 @@ def cleanup():
         manager.close()
     except PhidgetException as e:
         LocalErrorCatcher(e)
-
-
-# Function to handle sampling
-def get_one_sample():
-    timestamp = excel_date(datetime.datetime.now())
-    measurements = []
-
-    for board_index, (serial_no, board) in enumerate(connected_boards.items()):
-        for i in range(0, 4):
-            try:
-                measurements.append(board.channels[i].getVoltageRatio())
-            except PhidgetException as ex:
-                LocalErrorCatcher(ex)
-
-    display_cache.append(measurements[0] + measurements[1])
-    result_cache.appendleft((timestamp, measurements))      # writer pops from right
-
-
-# Executed by separate thread to write the result-cache to a file
-def file_writer(filename):
-    start_time = time.time()
-
-    while True:
-        # write measurements only at selected frequency
-        time.sleep(file_interval - ((time.time() - start_time) % file_interval))
-
-        # pop as many results as possible from shared cache into local cache
-        samples = []
-        while True:
-            try:
-                samples.append(result_cache.pop())
-            except IndexError as e:
-                break
-
-        # prepare one long line to be written to the output-file
-        output = ""
-        for sample in samples:
-            output += str(sample[0])
-            for value in sample[1]:
-                output += ", " + str(value)
-            output += "\n"
-
-        # write to file
-        with open(filename, 'a') as file:
-            file.write(output)
-            file.flush()
-
-
-def udp_writer(ip, port):
-    """
-    Method to be executed by writer_thread. Periodically push sampling-results to UDP-target.
-    :param ip: IP-address of target computer
-    :type ip: IPv4Address
-    :param port: Port-number at target computer
-    :type port: int
-    :return: Nothing
-    :rtype: none
-    """
-    start_time = time.time()
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as udp_socket:
-        while True:
-            # write measurements only at selected frequency
-            time.sleep(udp_interval - ((time.time() - start_time) % udp_interval))
-
-            # for as long as possible: pop a sample and send it over udp. if the cache is exhausted wait again.
-            while True:
-                try:
-                    (_, data) = result_cache.pop()  # ignore timestamp, only push results over udp
-                    udp_socket.sendto(doubles_to_bytes(data, 'little'), (ip.exploded, port))
-                except IndexError as e:
-                    break
 
 
 def displayer():
@@ -385,11 +261,11 @@ def main(STATE, udp_mode, test_mode):
             # cache to the file created above in regular intervals to reduce file operations. In normal mode, the
             # thread will execute the file_writer method. In udp-mode, it will execute the udp_writer method.
             if udp_mode:
-                target = udp_writer
-                args = (udp_ip, udp_port)
+                target = udpwriter.thread_method
+                args = (udp_ip, udp_port, result_cache, udp_interval)
             else:
-                target = file_writer
-                args = (filename,)
+                target = filewriter.thread_method
+                args = (filename, result_cache, file_interval)
             writer_thread = threading.Thread(target=target, daemon=True, args=args)
             writer_thread.start()
 
@@ -398,14 +274,17 @@ def main(STATE, udp_mode, test_mode):
             display_thread = threading.Thread(target=displayer, daemon=True)
             display_thread.start()
 
-            sampling_start_time = time.time()
+            # Set up thread to do the actual sampling
+            target = datasampler.thread_method
+            args = (connected_boards, display_cache, result_cache, sampling_interval)
+            sampler_thread = threading.Thread(target=target, daemon=True, args=args)
+            sampler_thread.start()
 
             STATE = "SAMPLING"
 
         elif STATE == "SAMPLING":
-
-            get_one_sample()
-            time.sleep(sampling_interval - ((time.time() - sampling_start_time) % sampling_interval))
+            return
+            pass
 
         elif STATE == "SHUTDOWN":
             pass
@@ -442,11 +321,7 @@ if __name__ == '__main__':
         cleanup()
         sys.exit(e)
 
-
-    print("Phidget Simple Playground (plug and unplug devices)");
     print("Press Enter to end anytime...");
     character = sys.stdin.read(1)
-
-
 
     exit(0)
