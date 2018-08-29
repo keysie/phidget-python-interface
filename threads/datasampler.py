@@ -32,6 +32,10 @@ def thread_method(connected_boards, desired_force_vector, display_cache, result_
     desired_force_f = collections.deque(array[:, 0])
     last_desired_force_output = 0
 
+    offset_cache = []
+    calibrated = False
+    static_offsets = [0, 0, 0, 0]
+
     while True:
         # write measurements only at selected frequency
         time_elapsed = time.time() - start_time
@@ -49,6 +53,17 @@ def thread_method(connected_boards, desired_force_vector, display_cache, result_
                 except PhidgetException as ex:
                     LocalErrorCatcher(ex)
                 measurements.append(ratio)
+
+        # automatically calibrate initial offset during first second after start of thread
+        if not calibrated:
+            offset_cache.append(measurements)
+            if time_elapsed >= 1:
+                data = numpy.array(offset_cache)
+                sums = numpy.sum(axis=0, a=data)
+                static_offsets = sums / len(offset_cache)
+                calibrated = True
+        else:
+            measurements -= static_offsets
 
         display_cache.append(sum(measurements))
 
