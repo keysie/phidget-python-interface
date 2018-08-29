@@ -15,13 +15,15 @@ class PhidgetBridge4Input(object):
     # NONE SO FAR
     # --------------------------------------------------------------------
 
-    def __init__(self, serial_no, virtual=False):
+    def __init__(self, serial_no, name=None, name_separator=':', virtual=False):
         # ----------- INSTANCE VARIABLES (UNIQUE FOR EVERY INSTANCE) ----------------
 
         self.channel_names = ["0", "1", "2", "3"]       # user specified names to ease understanding of results
         self.channel_gain = 7                           # allowed values: 1 (1x), 4 (8x), 5 (16x), 6 (32x), 7 (64x), 8 (128x)
         self.channels = [None, None, None, None]
         self.virtual = virtual                          # instance only simulates hardware
+        self.__name = name                              # human-readable name of the board
+        self.name_separator = name_separator
 
         # ---------------------------------------------------------------------------
 
@@ -57,6 +59,13 @@ class PhidgetBridge4Input(object):
             except PhiEx.PhidgetException as e:
                 print("Phidget Exception % i: % s" % (e.code, e.details))
                 exit(1)
+
+    @property
+    def name(self):
+        if self.__name is None:
+            return str(self.serial_number)
+        else:
+            return self.__name
 
     @property
     def ready(self):
