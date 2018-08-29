@@ -20,6 +20,7 @@ import PhidgetBridge4Input
 
 from threads import filewriter, udpwriter, datasampler
 from sampledisplay import sample_display
+from common import boarddictionary
 
 ########### USER CONFIGURABLE VALUES ###########
 
@@ -60,9 +61,17 @@ def AttachHandler(self, channel):
         return
 
     # This attach handler is called once per channel, ergo 4 times per board. But each board must be opened only
-    # once. Therefore check if the board with the same serial number is already attached.
+    # once. Therefore check if the board with the same serial number is already attached. If it is not, read or
+    # create the board-dictionary file and if present use the name in the dictionary for the new board.
     if serialNumber not in connected_boards:
-        connected_boards[serialNumber] = (PhidgetBridge4Input.PhidgetBridge4Input(serialNumber))
+        (board_dict, separator) = boarddictionary.read_or_create()
+
+        if str(serialNumber) in board_dict.keys():
+            new_board = PhidgetBridge4Input.PhidgetBridge4Input(serialNumber, board_dict[serialNumber], separator)
+        else:
+            new_board = PhidgetBridge4Input.PhidgetBridge4Input(serialNumber)
+
+        connected_boards[serialNumber] = new_board
         print("Device '" + str(deviceName) + "' attached, Serial Number: " + str(serialNumber))
 
 
@@ -174,7 +183,7 @@ def main(STATE, udp_mode, test_mode):
 
             if test_mode:
                 print("Device 'FAKE' attached, Serial Number: 1337")
-                connected_boards['1337'] = PhidgetBridge4Input.PhidgetBridge4Input(1337, True)
+                connected_boards['1337'] = PhidgetBridge4Input.PhidgetBridge4Input(1337, name='Fake', virtual=True)
 
             # Wait for user to press ENTER to start sampling
             while True:
@@ -193,23 +202,6 @@ def main(STATE, udp_mode, test_mode):
             # open and prepare file if not in udp mode
             if not udp_mode:
 
-                board_dict = {'serial_nr': 'name string'}
-                separator = ':'
-
-                # Look for board dictionary file. This file allows a user to specify human readable names for Phidget
-                # boards based on their serial-number. It also allows the specification of the separator used in between
-                # the board name and the channel name in the column header of the resulting *.csv file.
-                # If the file does not exist, create an empty template.
-                try:
-                    with open('board_dictionary.json', mode='r') as dict_for_read:
-                        [separator, board_dict] = json.load(dict_for_read)
-                except FileNotFoundError as e:
-                    with open('board_dictionary.json', mode='w') as dict_for_write:
-                        json.dump([separator, board_dict], dict_for_write, indent=4)
-                except OSError as e:
-                    print(e)
-                    exit(1)
-
                 # Compute name for csv output file
                 filename = file_prefix + datetime.datetime.now().strftime("%Y-%m-%d %H_%M_%S") + ".csv"
 
@@ -217,11 +209,7 @@ def main(STATE, udp_mode, test_mode):
                 header = "time (excel-format)"
                 for serial_nr, board in connected_boards.items():
                     for i in range(0, 4):
-                        if str(serial_nr) in board_dict.keys():
-                            board_name = board_dict[str(serial_nr)]
-                        else:
-                            board_name = str(serial_nr)
-                        header = header + ", " + board_name + separator + str(board.channel_names[i]) + " (mV/V)"
+                        header = header + ", " + board.name + board.name_separator + str(board.channel_names[i]) + " (mV/V)"
 
                 # Create file and write header
                 with open(filename, 'w+') as file:
