@@ -2,3 +2,4 @@ __pycache__/
 .idea/
 *.csv
 board_dictionary.json
+desired_force.txt
