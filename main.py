@@ -85,13 +85,13 @@ def DetachHandler(self, channel):
     if deviceName != "PhidgetBridge 4-Input":
         return
 
-    # Same logic as in AttachHandler. Only need to detach a board once.
+    # Only need to detach a board once.
     if serialNumber in connected_boards:
         connected_boards.pop(serialNumber)
         print("Device '" + str(deviceName) + "' detached, Serial Number: " + str(serialNumber))
 
 
-# =========== Python-specific Exception Handler ==========
+# =========== Phidget-specific Exception Handler ==========
 
 def LocalErrorCatcher(e):
     print("Phidget Exception: " + str(e.code) + " - " + str(e.details) + ", Exiting...")
