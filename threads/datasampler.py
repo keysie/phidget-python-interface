@@ -6,6 +6,8 @@
 
 import time
 import datetime
+import numpy
+import collections
 from Phidget22.Phidget import *
 
 
@@ -22,22 +24,40 @@ def __excel_date(date1):
     return float(delta.days) + (float(delta.seconds) / 86400) + (float(delta.microseconds) / (86400 * 1000 * 1000))
 
 
-def thread_method(connected_boards, display_cache, result_cache, interval):
+def thread_method(connected_boards, desired_force_vector, display_cache, result_cache, reference_cache, interval):
     start_time = time.time()
+
+    array = numpy.array(desired_force_vector)
+    desired_force_t = collections.deque(array[:, 1])
+    desired_force_f = collections.deque(array[:, 0])
+    last_desired_force_output = 0
 
     while True:
         # write measurements only at selected frequency
-        time.sleep(interval - ((time.time() - start_time) % interval))
+        time_elapsed = time.time() - start_time
+        time.sleep(interval - (time_elapsed % interval))
 
         timestamp = __excel_date(datetime.datetime.now())
         measurements = []
 
+        # Obtain measurements and store them in the display-chache
         for board_index, (serial_no, board) in enumerate(connected_boards.items()):
             for i in range(0, 4):
+                ratio = 0
                 try:
-                    measurements.append(board.channels[i].getVoltageRatio())
+                    ratio = board.channels[i].getVoltageRatio()
                 except PhidgetException as ex:
                     LocalErrorCatcher(ex)
+                measurements.append(ratio)
 
         display_cache.append(measurements)
-        result_cache.appendleft((timestamp, measurements))      # writer pops from right
+
+        # See if a new desired force value is available for the current time. If not, keep adding the last value to the
+        # reference cache
+        if time_elapsed > desired_force_t[0]:
+            desired_force_t.popleft()
+            last_desired_force_output = desired_force_f.popleft()
+        reference_cache.append(last_desired_force_output)
+
+        # store measurements also in the result-cache
+        result_cache.appendleft((timestamp, measurements, last_desired_force_output))  # writer pops from right

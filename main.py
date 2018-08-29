@@ -44,6 +44,7 @@ sampling_interval = 0.008                       # sample at 125 Hz
 displayed_measurements = round(seconds_after_measurement / sampling_interval)
 result_cache = collections.deque()              # stores results before they are written to a file
 display_cache = None                            # shared store for displayed measurements
+reference_cache = None                          # shared queue for reference values
 connected_boards = {}                           # dictionary of all connected PhidgetBridge4Input devices
 
 STATE = "INIT"                       # INIT | WAITING | PREPARE-FOR-SAMPLING | SAMPLING | SHUTDOWN | ERROR
@@ -108,6 +109,27 @@ def __initialize_display_cache(board_number):
         for j in range(0, board_number * 4):
             entry.append(0)
         display_cache.append(entry)
+
+
+def __initialize_reference_cache():
+    global reference_cache, seconds_after_measurement, seconds_before_measurement
+    reference_cache = collections.deque(maxlen=
+                                      round((seconds_before_measurement+seconds_after_measurement)/sampling_interval))
+    for i in range(0, reference_cache.maxlen):
+        reference_cache.append(0)
+
+
+def __read_desired_force():
+        filename = 'desired_force.txt'
+        data = ''
+        try:
+            with open(filename) as f:
+                data = json.load(f)
+        except FileNotFoundError as e:
+            print('The file ' + filename + ' does not exist. Aborting.')
+            exit(1)
+
+        return data
 
 
 # Cleanup function
@@ -214,6 +236,10 @@ def main(STATE, udp_mode, test_mode):
 
             # prepare display-cache
             __initialize_display_cache(len(connected_boards))
+            __initialize_reference_cache()
+
+            # read desired force
+            desired_force_vector = __read_desired_force()
 
             # open and prepare file if not in udp mode
             if not udp_mode:
@@ -226,6 +252,9 @@ def main(STATE, udp_mode, test_mode):
                 for serial_nr, board in connected_boards.items():
                     for i in range(0, 4):
                         header = header + ", " + board.name + board.name_separator + str(board.channel_names[i]) + " (mV/V)"
+
+                # add reference header
+                header = header + ", Reference data"
 
                 # Create file and write header
                 with open(filename, 'w+') as file:
@@ -245,7 +274,7 @@ def main(STATE, udp_mode, test_mode):
 
             # Set up thread to do the actual sampling
             target = datasampler.thread_method
-            args = (connected_boards, display_cache, result_cache, sampling_interval)
+            args = (connected_boards, desired_force_vector, display_cache, result_cache, reference_cache, sampling_interval)
             sampler_thread = threading.Thread(target=target, daemon=True, args=args)
             sampler_thread.start()
 
@@ -283,7 +312,8 @@ if __name__ == '__main__':
     try:
         main(STATE, udp_mode, test_mode)
         app = QtGui.QApplication(sys.argv)
-        form = sample_display.SampleDisplay(display_cache, sampling_interval, seconds_before_measurement, seconds_after_measurement, len(connected_boards))
+        form = sample_display.SampleDisplay(display_cache, reference_cache, connected_boards, sampling_interval,
+                                            seconds_before_measurement, seconds_after_measurement)
         form.show()
         form.update()  # start with something
         app.exec_()
