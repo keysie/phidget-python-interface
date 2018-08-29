@@ -185,7 +185,10 @@ def main(STATE, udp_mode, test_mode):
             else:
 
                 # Query user for file prefix
-                file_prefix = input("Specify prefix for filename or press ENTER for no prefix:")
+                if not test_mode:
+                    file_prefix = input("Specify prefix for filename or press ENTER for no prefix:")
+                else:
+                    file_prefix = ''
                 if file_prefix != '':
                     print(file_prefix)
                     file_prefix = file_prefix + " - "
@@ -221,7 +224,7 @@ def main(STATE, udp_mode, test_mode):
                 connected_boards['1337'] = PhidgetBridge4Input.PhidgetBridge4Input(1337, name='Fake', virtual=True)
 
             # Wait for user to press ENTER to start sampling
-            while True:
+            while True and not test_mode:
                 input("")
                 if len(connected_boards) == 0:
                     print("Cannot start sampling: No boards are connected!")
