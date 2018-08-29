@@ -24,7 +24,8 @@ def __excel_date(date1):
     return float(delta.days) + (float(delta.seconds) / 86400) + (float(delta.microseconds) / (86400 * 1000 * 1000))
 
 
-def thread_method(connected_boards, desired_force_vector, display_cache, result_cache, reference_cache, interval):
+def thread_method(connected_boards, desired_force_vector, display_cache, result_cache,
+                  reference_cache, gains, interval):
     start_time = time.time()
 
     array = numpy.array(desired_force_vector)
@@ -52,7 +53,7 @@ def thread_method(connected_boards, desired_force_vector, display_cache, result_
                     ratio = board.channels[i].getVoltageRatio()
                 except PhidgetException as ex:
                     LocalErrorCatcher(ex)
-                measurements.append(ratio)
+                measurements.append(ratio * gains[i])
 
         # automatically calibrate initial offset during first second after start of thread
         if not calibrated:

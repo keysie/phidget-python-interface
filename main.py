@@ -6,6 +6,7 @@
 
 
 import datetime
+import numpy
 import collections
 import threading
 import os
@@ -26,6 +27,9 @@ from common import boarddictionary
 
 seconds_before_measurement = 15                 # how many seconds between measurement and appearance of desired value
 seconds_after_measurement = 5                   # how much time to be displayed after moment of measurement
+
+load_cell_gains = numpy.array([1.0, 1.0, 1.0, 1.0])   # calibrated gains for the four connected load cells (mV/V -> N)
+load_cell_gains *= 1000 * 490.5
 
 display_interval = 0.02                         # update display at 50 Hz
 file_interval = 1.0                             # write results to file at 1 Hz
@@ -272,7 +276,8 @@ def main(STATE, udp_mode, test_mode):
 
             # Set up thread to do the actual sampling
             target = datasampler.thread_method
-            args = (connected_boards, desired_force_vector, display_cache, result_cache, reference_cache, sampling_interval)
+            args = (connected_boards, desired_force_vector, display_cache,
+                    result_cache, reference_cache, load_cell_gains, sampling_interval)
             sampler_thread = threading.Thread(target=target, daemon=True, args=args)
             sampler_thread.start()
 
