@@ -86,23 +86,14 @@ class SampleDisplay(QtGui.QMainWindow, ui_main.Ui_MainWindow):
         :rtype: None
         """
 
-        # iterate over sources
-        for source_index in range(0, self.num_boards):
+        data = numpy.array(self.display_cache)
 
-            # iterate over channels in each source
-            for channel_index in range(0, 4):
-
-                data = numpy.array(self.display_cache)[:, source_index * 4 + channel_index]
-
-                if channel_index == 0:
-                    self.plots[source_index].plot(self.timerange_measurements, data,
-                                                  pen=self.measurement_pens[channel_index], clear=True)
-                else:
-                    self.plots[source_index].plot(self.timerange_measurements, data,
-                                                  pen=self.measurement_pens[channel_index], clear=False)
+        # plot measurement data (currently sum of all 4 inputs of first connected board)
+        self.plots[0].plot(self.timerange_measurements, data,
+                           pen=self.measurement_pens[0], clear=True)
 
         # plot reference data
         self.plots[0].plot(self.timerange_reference, numpy.array(self.reference_cache),
                            pen=self.reference_pen, clear=False)
 
-        QtCore.QTimer.singleShot(5, self.update)  # QUICKLY repeat (5ms intervals)
+        QtCore.QTimer.singleShot(2, self.update)  # QUICKLY redraw (2ms intervals)

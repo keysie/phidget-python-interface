@@ -50,7 +50,7 @@ def thread_method(connected_boards, desired_force_vector, display_cache, result_
                     LocalErrorCatcher(ex)
                 measurements.append(ratio)
 
-        display_cache.append(measurements)
+        display_cache.append(sum(measurements))
 
         # See if a new desired force value is available for the current time. If not, keep adding the last value to the
         # reference cache

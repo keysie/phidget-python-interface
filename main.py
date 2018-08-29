@@ -101,14 +101,11 @@ def LocalErrorCatcher(e):
 # =========== Other local functions ==========
 
 
-def __initialize_display_cache(board_number):
+def __initialize_display_cache():
     global display_cache, displayed_measurements
     display_cache = collections.deque(maxlen=displayed_measurements)
     for i in range(0, displayed_measurements):
-        entry = []
-        for j in range(0, board_number * 4):
-            entry.append(0)
-        display_cache.append(entry)
+        display_cache.append(0)
 
 
 def __initialize_reference_cache():
@@ -236,7 +233,7 @@ def main(STATE, udp_mode, test_mode):
         elif STATE == "PREPARE-FOR-SAMPLING":
 
             # prepare display-cache
-            __initialize_display_cache(len(connected_boards))
+            __initialize_display_cache()
             __initialize_reference_cache()
 
             # read desired force
