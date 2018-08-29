@@ -71,9 +71,6 @@ class PhidgetBridge4Input(object):
 
     @property
     def serial_number(self):
-        if self.virtual:
-            return 1337
-
         serials = [0, 1, 2, 3]
         for i, ch in enumerate(self.channels):
             try:
