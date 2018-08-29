@@ -43,7 +43,7 @@ udp_port = 0                                    # port @ udp-target in case udp-
 sampling_interval = 0.008                       # sample at 125 Hz
 displayed_measurements = round(seconds_after_measurement / sampling_interval)
 result_cache = collections.deque()              # stores results before they are written to a file
-display_cache = collections.deque(maxlen=displayed_measurements)   # temporary store for displayed measurements
+display_cache = None                            # shared store for displayed measurements
 connected_boards = {}                           # dictionary of all connected PhidgetBridge4Input devices
 
 STATE = "INIT"                       # INIT | WAITING | PREPARE-FOR-SAMPLING | SAMPLING | SHUTDOWN | ERROR
@@ -95,6 +95,19 @@ def DetachHandler(self, channel):
 def LocalErrorCatcher(e):
     print("Phidget Exception: " + str(e.code) + " - " + str(e.details) + ", Exiting...")
     exit(1)
+
+
+# =========== Other local functions ==========
+
+
+def __initialize_display_cache(board_number):
+    global display_cache, displayed_measurements
+    display_cache = collections.deque(maxlen=displayed_measurements)
+    for i in range(0, displayed_measurements):
+        entry = []
+        for j in range(0, board_number * 4):
+            entry.append(0)
+        display_cache.append(entry)
 
 
 # Cleanup function
@@ -198,6 +211,9 @@ def main(STATE, udp_mode, test_mode):
             STATE = "PREPARE-FOR-SAMPLING"
 
         elif STATE == "PREPARE-FOR-SAMPLING":
+
+            # prepare display-cache
+            __initialize_display_cache(len(connected_boards))
 
             # open and prepare file if not in udp mode
             if not udp_mode:
