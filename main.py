@@ -134,9 +134,7 @@ def __read_desired_force():
 
 # Cleanup function
 def cleanup():
-    #signal.signal(signal.SIGINT, signal.SIG_IGN)  # ignore sigints while cleaning up
     print("Closing...")
-    plt.close('all')
     try:
         manager.close()
     except PhidgetException as e:
