@@ -76,5 +76,5 @@ def thread_method(connected_boards, desired_force_vector, display_cache, result_
         reference_cache.append(last_desired_force_output)
 
         # store measurements also in the result-cache
-        reference_index = round(seconds_before_measurement / interval)  # take time offset into account
+        reference_index = reference_cache.maxlen - round(seconds_before_measurement / interval)  # take time offset into account
         result_cache.appendleft((timestamp, measurements, reference_cache[reference_index]))  # writer pops from right
