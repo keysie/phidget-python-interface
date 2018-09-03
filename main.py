@@ -115,7 +115,7 @@ def __initialize_display_cache():
 def __initialize_reference_cache():
     global reference_cache, seconds_after_measurement, seconds_before_measurement
     reference_cache = collections.deque(maxlen=
-                                      round((seconds_before_measurement+seconds_after_measurement)/sampling_interval))
+                                        round((seconds_before_measurement+seconds_after_measurement)/sampling_interval))
     for i in range(0, reference_cache.maxlen):
         reference_cache.append(0)
 
