@@ -25,8 +25,8 @@ class SampleDisplay(QtGui.QMainWindow, ui_main.Ui_MainWindow):
     measurement_pens = [pyqtgraph.mkPen(color=plot_colors[0], width=3),
                         pyqtgraph.mkPen(color=plot_colors[1], width=3),
                         pyqtgraph.mkPen(color=plot_colors[2], width=3),
-                        pyqtgraph.mkPen(color=plot_colors[3], width=3)]
-    reference_pen = pyqtgraph.mkPen(color=plot_colors[5], width=3)
+                        pyqtgraph.mkPen(color=plot_colors[5], width=3)]
+    reference_pen = pyqtgraph.mkPen(color=plot_colors[3], width=3)
 
     def __init__(self, display_cache, reference_cache, connected_boards, sampling_interval, seconds_before,
                  seconds_after):
