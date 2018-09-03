@@ -96,4 +96,5 @@ class SampleDisplay(QtGui.QMainWindow, ui_main.Ui_MainWindow):
         self.plots[0].plot(self.timerange_reference, numpy.array(self.reference_cache),
                            pen=self.reference_pen, clear=False)
 
+        self.plots[0].setYRange(-20, 500, padding=0)        # <<< adjust YLIM here
         QtCore.QTimer.singleShot(2, self.update)  # QUICKLY redraw (2ms intervals)
