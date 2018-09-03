@@ -277,7 +277,7 @@ def main(STATE, udp_mode, test_mode):
             # Set up thread to do the actual sampling
             target = datasampler.thread_method
             args = (connected_boards, desired_force_vector, display_cache,
-                    result_cache, reference_cache, load_cell_gains, sampling_interval)
+                    result_cache, reference_cache, load_cell_gains, seconds_before_measurement, sampling_interval)
             sampler_thread = threading.Thread(target=target, daemon=True, args=args)
             sampler_thread.start()
 
