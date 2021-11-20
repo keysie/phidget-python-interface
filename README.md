@@ -1,4 +1,4 @@
-#Phidget Python Interface
+# Phidget Python Interface
 
 A software package written in Python 3 that is designed to facilitate the process of recording data using one or more [PhidgetBridge 4-Input](https://www.phidgets.com/?tier=3&catid=98&pcid=78&prodid=1027) devices connected to the executing computer via USB.
 
@@ -16,7 +16,7 @@ __NOTE__: It's Windows, so you'll have to run the console you're installing from
 
 *If anyone ever gets to test this, please let me know if I forgot something.*
 
-###Raspbian Strech on Raspberry Pi 
+### Raspbian Strech on Raspberry Pi 
 
 1. Install Python 3 using ``sudo apt-get install python3``
 
@@ -35,7 +35,7 @@ __NOTE__: It's Windows, so you'll have to run the console you're installing from
 
 You can install numpy using pip3 instead of apt-get, but if you do this then __you must run pip3 as root using ``sudo``__. If you don't you will get error messages about missing libraries. PyQt5 does not currently provide a wheels package for ARM, thus no luck there using pip3.
 
-###Ubuntu x86 and x86-64
+### Ubuntu x86 and x86-64
 
 1. same as for Raspbian
 2. almost the same, except replace *stretch* in 2.3 with
